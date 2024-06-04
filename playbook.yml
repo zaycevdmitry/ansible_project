@@ -5,6 +5,7 @@
   hosts: web_servers
   vars:
     new_user: dmitry
+    default_file: '/home/dima/github/ansible_project/files'
 
 
   tasks:
@@ -98,16 +99,13 @@
         group: root
         mode: '0644'
 
-    - name: Add location to Nginx configuration
-      blockinfile:
-        path: /etc/nginx/conf.d/default.conf
-        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item }}"
-        block: |
-          location /egov {
-              autoindex on;
-          }
-      notify:
-        - Restart Nginx
+    - name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: "{{ default_file }}"
+    dest: /etc/nginx/conf.d/
+    owner: foo
+    group: foo
+    mode: '0644'
 
   handlers:
     - name: Restart SSH service
