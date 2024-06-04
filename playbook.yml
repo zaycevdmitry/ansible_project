@@ -99,13 +99,13 @@
         group: root
         mode: '0644'
 
-    - name: Copy file with owner and permissions
-  ansible.builtin.copy:
-    src: "{{ default_file }}"
-    dest: /etc/nginx/conf.d/
-    owner: foo
-    group: foo
-    mode: '0644'
+    - name: Copy file with owner and permission
+      ansible.builtin.copy:
+        src: "{{ default_file }}"
+        dest: /etc/nginx/conf.d/
+        owner: foo
+        group: foo
+        mode: '0644'
 
   handlers:
     - name: Restart SSH service
