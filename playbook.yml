@@ -1,0 +1,127 @@
+---
+- name: Setup new user, configure SSH, install Nginx, configure logrotate, create directory with a file, and add location to Nginx
+  hosts: all
+  become: yes
+
+  vars:
+    new_user: dmitry
+    ssh_key_file: "/home/dima/.ssh/id_rsa.pub"  # Укажите путь к вашему файлу rsa_id.pub
+
+  tasks:
+    - name: Ensure the sudo group exists
+      group:
+        name: sudo
+        state: present
+
+    - name: Create new user
+      user:
+        name: "{{ new_user }}"
+        groups: sudo
+        shell: /bin/bash
+        state: present
+
+    - name: Read SSH public key from file
+      slurp:
+        src: "{{ ssh_key_file }}"
+      register: slurped_key
+
+    - name: Set up authorized key for new user
+      authorized_key:
+        user: "{{ new_user }}"
+        state: present
+        key: "{{ slurped_key['content'] | b64decode }}"
+
+    - name: Disable root SSH access
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+      notify: Restart SSH service
+
+    - name: Disable SSH password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+      notify: Restart SSH service
+
+    - name: Restart SSH service
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Configure logrotate for Nginx logs
+      copy:
+        content: |
+          /var/log/nginx/*.log {
+              daily
+              missingok
+              rotate 3
+              compress
+              delaycompress
+              notifempty
+              create 0640 www-data adm
+              sharedscripts
+              postrotate
+                  if [ -f /var/run/nginx.pid ]; then
+                      kill -USR1 `cat /var/run/nginx.pid`
+                  fi
+              endscript
+          }
+        dest: /etc/logrotate.d/nginx
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create /var/www/egov directory
+      file:
+        path: /var/www/egov
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create file1.txt in /var/www/egov
+      copy:
+        content: "This is file1.txt"
+        dest: /var/www/egov/file1.txt
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Add location to Nginx configuration
+      blockinfile:
+        path: /etc/nginx/conf.d/default.conf
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item }}"
+        block: |
+          location /egov {
+              autoindex on;
+          }
+      notify:
+        - Restart Nginx
+
+  handlers:
+    - name: Restart SSH service
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
