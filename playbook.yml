@@ -103,8 +103,8 @@
       ansible.builtin.copy:
         src: "{{ default_file }}"
         dest: /etc/nginx/conf.d/
-        owner: foo
-        group: foo
+        owner: root
+        group: root
         mode: '0644'
 
   handlers:
