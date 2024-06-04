@@ -103,7 +103,7 @@
       ansible.builtin.copy:
         src: "{{ default_file }}"
         dest: /etc/nginx/conf.d/default.conf
-        remote_src: false
+        remote_src: true
         owner: root
         group: root
         mode: '0644'
