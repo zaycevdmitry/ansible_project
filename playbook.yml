@@ -5,7 +5,7 @@
   hosts: web_servers
   vars:
     new_user: dmitry
-    default_file: '/home/dima/github/ansible_project/files'
+    default_file: '/home/dima/github/ansible_project/files/default.conf'
 
 
   tasks:
