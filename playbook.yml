@@ -102,7 +102,7 @@
     - name: Copy file with owner and permission
       ansible.builtin.copy:
         src: "{{ default_file }}"
-        dest: /etc/nginx/conf.d/
+        dest: /etc/nginx/conf.d/default.conf
         owner: root
         group: root
         mode: '0644'
