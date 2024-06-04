@@ -5,7 +5,7 @@
   hosts: web_servers
   vars:
     new_user: dmitry
-    ssh_key_file: "/home/dima/.ssh/id_rsa.pub"
+
 
   tasks:
     - name: Ensure the sudo group exists
@@ -20,16 +20,11 @@
         shell: /bin/bash
         state: present
 
-    - name: Read SSH public key from file
-      slurp:
-        src: "{{ ssh_key_file }}"
-      register: slurped_key
-
     - name: Set up authorized key for new user
-      authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ new_user }}"
         state: present
-        key: "{{ slurped_key['content'] | b64decode }}"
+        key: "{{ lookup('file', '/home/dima/.ssh/id_rsa.pub') }}"
 
     - name: Disable root SSH access
       lineinfile:
@@ -49,7 +44,7 @@
 
     - name: Restart SSH service
       service:
-        name: sshd
+        name: ssh
         state: restarted
 
     - name: Install Nginx
